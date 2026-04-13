@@ -5,47 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الإنجيل المقدس - المطران أنطوان ناصيف</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, collection, onSnapshot, getDocs, query } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'gospel-app-prod';
-
-        window.appState = { db, auth, appId, user: null };
-
-        // تسجيل الدخول أولاً قبل أي عملية أخرى
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (e) {
-                console.error("Auth failed:", e);
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            window.appState.user = user;
-            if (user) {
-                const status = document.getElementById('auth-status');
-                if (status) {
-                    status.innerText = "متصل بقاعدة البيانات ✓";
-                    status.className = "text-xs text-green-600 font-bold";
-                }
-                // بدء تحميل البيانات فقط بعد نجاح تسجيل الدخول
-                if (window.ui) window.ui.loadInitialData();
-            }
-        });
-
-        initAuth();
-    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif+Arabic:wght@400;700&display=swap');
         :root { --clerical-red: #8B0000; --liturgical-gold: #D4AF37; --sacred-white: #FCF9F2; }
@@ -105,52 +64,7 @@
         </div>
     </div>
 
-    <footer class="mt-20 text-center pb-10">
-        <button onclick="ui.toggleAdmin()" class="text-gray-300 hover:text-amber-600 text-[10px] uppercase tracking-[0.4em]">إدارة المحتوى - Admin</button>
-    </footer>
-
-    <!-- Admin Panel Modal -->
-    <div id="admin-panel" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-[2rem] max-w-lg w-full p-10 shadow-2xl relative">
-            <button onclick="ui.toggleAdmin()" class="absolute top-6 left-6 text-gray-400 text-2xl">&times;</button>
-            <div id="admin-login-ui">
-                <h3 class="text-2xl font-bold mb-8 text-center text-[#8B0000]">تسجيل دخول المسؤول</h3>
-                <input type="password" id="admin-key" class="w-full border-2 border-gray-100 p-4 rounded-xl mb-6 text-center text-2xl focus:border-amber-400 outline-none" placeholder="الرمز السري">
-                <button onclick="ui.doLogin()" class="w-full bg-[#8B0000] text-white py-4 rounded-xl font-bold text-lg shadow-lg">دخول</button>
-            </div>
-            <div id="admin-upload-ui" class="hidden space-y-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-2xl font-bold text-[#8B0000]">رفع تسجيل جديد</h3>
-                    <div id="auth-status" class="text-[10px] text-gray-400 uppercase tracking-tighter">جارِ الاتصال...</div>
-                </div>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <select id="up-gospel" class="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 font-bold">
-                            <option value="matthew">بشارة متى</option>
-                            <option value="mark">بشارة مرقس</option>
-                            <option value="luke">بشارة لوقا</option>
-                            <option value="john">بشارة يوحنا</option>
-                        </select>
-                        <input type="number" id="up-chapter" class="w-full border border-gray-200 p-3 rounded-xl" placeholder="رقم الفصل">
-                    </div>
-                    <div class="border-2 border-dashed border-amber-200 p-8 rounded-2xl text-center bg-amber-50/20">
-                        <input type="file" id="up-file" accept="audio/*" class="w-full text-xs cursor-pointer">
-                    </div>
-                    <div id="progress-container" class="hidden">
-                        <div class="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-                            <div id="progress-bar" class="h-full bg-green-500 w-0 transition-all"></div>
-                        </div>
-                        <p id="progress-label" class="text-center text-[10px] mt-2 font-bold text-green-700">جاري الرفع...</p>
-                    </div>
-                    <button id="main-upload-btn" onclick="ui.startUpload()" class="w-full bg-green-700 text-white py-5 rounded-2xl font-bold shadow-xl">بدء الرفع</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        import { doc, setDoc, onSnapshot, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
+    <script>
         const GOSPEL_DATA = {
             matthew: { name: "بشارة متى", max: 28 },
             mark: { name: "بشارة مرقس", max: 16 },
@@ -158,27 +72,7 @@
             john: { name: "بشارة يوحنا", max: 21 }
         };
 
-        const CHUNK_SIZE = 250000;
-        let activeChapters = new Set();
-        let unsubMeta = null;
-
         window.ui = {
-            loadInitialData() {
-                if (unsubMeta) unsubMeta(); // تنظيف أي مستمع قديم
-                const { db, appId, user } = window.appState;
-                if (!user) return;
-
-                // استخدام المسار الصحيح والمؤمن
-                const metaRef = collection(db, 'artifacts', appId, 'public', 'data', 'audio_meta');
-                unsubMeta = onSnapshot(metaRef, (snap) => {
-                    activeChapters = new Set();
-                    snap.forEach(d => activeChapters.add(d.id));
-                    if (window.selectedGospel) this.selectGospel(window.selectedGospel);
-                }, (error) => {
-                    console.error("Firestore Listener Error:", error);
-                });
-            },
-
             selectGospel(id) {
                 window.selectedGospel = id;
                 document.getElementById('chapters-container').classList.remove('hidden');
@@ -189,90 +83,28 @@
                 const grid = document.getElementById('chapters-grid');
                 grid.innerHTML = '';
                 for (let i = 1; i <= GOSPEL_DATA[id].max; i++) {
-                    const hasAudio = activeChapters.has(`${id}_${i}`);
                     const btn = document.createElement('div');
-                    btn.className = `chapter-btn ${hasAudio ? 'has-audio shadow-sm' : 'opacity-25 grayscale pointer-events-none'}`;
+                    // جعلنا جميع الأزرار نشطة للبحث في مجلد audio
+                    btn.className = `chapter-btn has-audio shadow-sm`;
                     btn.innerText = i;
-                    if (hasAudio) btn.onclick = () => this.playChapter(id, i);
+                    btn.onclick = () => this.playChapter(id, i);
                     grid.appendChild(btn);
                 }
             },
 
-            async playChapter(id, ch) {
-                const { db, appId, user } = window.appState;
-                if (!user) return alert("بانتظار تأمين الاتصال...");
-
+            playChapter(id, ch) {
                 document.getElementById('now-playing').innerText = `استماع: ${GOSPEL_DATA[id].name} - الفصل ${ch}`;
                 document.getElementById('player-bar').classList.remove('translate-y-full');
                 
-                try {
-                    const chunksRef = collection(db, 'artifacts', appId, 'public', 'data', 'audio_chunks', `${id}_${ch}`, 'parts');
-                    const snap = await getDocs(chunksRef);
-                    const parts = [];
-                    snap.forEach(d => parts[parseInt(d.id)] = d.data().data);
-                    const audio = document.getElementById('audio-element');
-                    audio.src = parts.join('');
-                    audio.play();
-                } catch (e) {
-                    alert("حدث خطأ في جلب الملف. يرجى المحاولة لاحقاً.");
-                }
-            },
-
-            toggleAdmin() {
-                const panel = document.getElementById('admin-panel');
-                panel.classList.toggle('hidden');
-                panel.classList.toggle('flex');
-            },
-
-            doLogin() {
-                if (document.getElementById('admin-key').value === "123") {
-                    document.getElementById('admin-login-ui').classList.add('hidden');
-                    document.getElementById('admin-upload-ui').classList.remove('hidden');
-                } else {
-                    alert("الرمز غير صحيح");
-                }
-            },
-
-            async startUpload() {
-                const gospel = document.getElementById('up-gospel').value;
-                const chapter = document.getElementById('up-chapter').value;
-                const fileInput = document.getElementById('up-file');
-                const file = fileInput.files[0];
-                const { db, appId, user } = window.appState;
-
-                if (!file || !chapter) return alert("اختر الملف ورقم الفصل أولاً.");
-                if (!user) return alert("لم يتم الاتصال بقاعدة البيانات بعد.");
-
-                const btn = document.getElementById('main-upload-btn');
-                btn.disabled = true;
-                document.getElementById('progress-container').classList.remove('hidden');
-
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = async () => {
-                    const base64 = reader.result;
-                    const totalParts = Math.ceil(base64.length / CHUNK_SIZE);
-                    const docId = `${gospel}_${chapter}`;
-                    
-                    try {
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'audio_meta', docId), {
-                            gospel, chapter: parseInt(chapter), uploadedAt: new Date().toISOString()
-                        });
-
-                        for (let i = 0; i < totalParts; i++) {
-                            const chunk = base64.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-                            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'audio_chunks', docId, 'parts', i.toString()), { data: chunk });
-                            const p = Math.round(((i + 1) / totalParts) * 100);
-                            document.getElementById('progress-bar').style.width = p + '%';
-                            document.getElementById('progress-label').innerText = `تم رفع ${p}%...`;
-                        }
-                        alert("تم الرفع بنجاح!");
-                        location.reload();
-                    } catch (err) {
-                        alert("فشل الرفع: " + err.message);
-                        btn.disabled = false;
-                    }
-                };
+                const audio = document.getElementById('audio-element');
+                // الربط مع المجلد الذي أنشأته على GitHub
+                // ملاحظة: تأكد من تسمية الملفات مثل matthew-1.mp3
+                audio.src = `audio/${id}-${ch}.mp3`;
+                
+                audio.play().catch(e => {
+                    alert("عذراً، الملف الصوتي لهذا الفصل غير متوفر حالياً في المجلد.");
+                    console.error("Audio error:", e);
+                });
             },
 
             hidePlayer() {
